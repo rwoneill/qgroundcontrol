@@ -95,33 +95,56 @@ void UDPConfiguration::copyFrom(const LinkConfiguration *source)
     _targetHosts.clear();
 
     for (const std::shared_ptr<UDPClient> &target : udpSource->targetHosts()) {
+
         if (!containsTarget(_targetHosts, target->address, target->port)) {
-            _targetHosts.append(std::make_shared<UDPClient>(target.get()));
-            _updateHostList();
-        }
+            auto client = std::make_shared<UDPClient>(target.get());
+            client->hostString = target->hostString;
+            _targetHosts.append(client);
+        } 
     }
+
+    _updateHostList(); 
 }
+
 
 void UDPConfiguration::loadSettings(QSettings &settings, const QString &root)
 {
     settings.beginGroup(root);
 
-    setLocalPort(static_cast<quint16>(settings.value("port", SettingsManager::instance()->autoConnectSettings()->udpListenPort()->rawValue().toUInt()).toUInt()));
+    setLocalPort(static_cast<quint16>(
+        settings.value("port", SettingsManager::instance()->autoConnectSettings()->udpListenPort()->rawValue().toUInt()).toUInt()
+    ));
 
     _targetHosts.clear();
-    const qsizetype hostCount = settings.value("hostCount", 0).toUInt();
-    for (qsizetype i = 0; i < hostCount; i++) {
+    const int hostCount = settings.value("hostCount", 0).toInt();
+
+    for (int i = 0; i < hostCount; ++i) {
         const QString hkey = QStringLiteral("host%1").arg(i);
         const QString pkey = QStringLiteral("port%1").arg(i);
-        if (settings.contains(hkey) && settings.contains(pkey)) {
-            addHost(settings.value(hkey).toString(), settings.value(pkey).toUInt());
+        if (!settings.contains(hkey) || !settings.contains(pkey)) {
+            qWarning() << "Missing host or port key for index" << i;
+            continue;
         }
+
+        QString savedHost = settings.value(hkey).toString();
+        quint16 port = static_cast<quint16>(settings.value(pkey).toUInt());
+        QString ipAdd = getIpAddress(savedHost);
+        QHostAddress address = ipAdd.isEmpty()
+            ? QHostAddress("0.0.0.0")
+            : QHostAddress(ipAdd);
+
+        auto client = std::make_shared<UDPClient>(address, port);
+        client->hostString = savedHost;  
+        _targetHosts.append(client);
     }
 
     _updateHostList();
-
     settings.endGroup();
 }
+
+
+
+
 
 void UDPConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
@@ -130,16 +153,17 @@ void UDPConfiguration::saveSettings(QSettings &settings, const QString &root) co
     settings.setValue(QStringLiteral("hostCount"), _targetHosts.size());
     settings.setValue(QStringLiteral("port"), _localPort);
 
-    for (qsizetype i = 0; i < _targetHosts.size(); i++) {
-        const std::shared_ptr<UDPClient> target = _targetHosts.at(i);
+    for (qsizetype i = 0; i < _targetHosts.size(); ++i) {
+        const auto &target = _targetHosts.at(i);
         const QString hkey = QStringLiteral("host%1").arg(i);
-        settings.setValue(hkey, target->address.toString());
         const QString pkey = QStringLiteral("port%1").arg(i);
+        settings.setValue(hkey, target->hostString.isEmpty() ? target->address.toString() : target->hostString);
         settings.setValue(pkey, target->port);
     }
 
     settings.endGroup();
 }
+
 
 void UDPConfiguration::addHost(const QString &host)
 {
@@ -161,18 +185,19 @@ void UDPConfiguration::addHost(const QString &host)
 
 void UDPConfiguration::addHost(const QString &host, quint16 port)
 {
-    const QString ipAdd = _getIpAddress(host);
-    if (ipAdd.isEmpty()) {
-        qCWarning(UDPLinkLog) << "Could not resolve host:" << host << "port:" << port;
-        return;
-    }
+    QString ipAdd = getIpAddress(host);
+    QHostAddress address = ipAdd.isEmpty() ? QHostAddress("0.0.0.0") : QHostAddress(ipAdd);
 
-    const QHostAddress address(ipAdd);
     if (!containsTarget(_targetHosts, address, port)) {
-        _targetHosts.append(std::make_shared<UDPClient>(address, port));
+        auto client = std::make_shared<UDPClient>(address, port);
+        client->hostString = host;  // Preserve original hostname
+        _targetHosts.append(client);
         _updateHostList();
     }
 }
+
+
+
 
 void UDPConfiguration::removeHost(const QString &host)
 {
@@ -183,7 +208,7 @@ void UDPConfiguration::removeHost(const QString &host)
             return;
         }
 
-        const QHostAddress address = QHostAddress(_getIpAddress(hostInfo.constFirst()));
+        const QHostAddress address = QHostAddress(getIpAddress(hostInfo.constFirst()));
         const quint16 port = hostInfo.constLast().toUInt();
 
         if (!containsTarget(_targetHosts, address, port)) {
@@ -206,7 +231,7 @@ void UDPConfiguration::removeHost(const QString &host)
 
 void UDPConfiguration::removeHost(const QString &host, quint16 port)
 {
-    const QString ipAdd = _getIpAddress(host);
+    const QString ipAdd = getIpAddress(host);
     if (ipAdd.isEmpty()) {
         qCWarning(UDPLinkLog) << "Could not resolve host:" << host << "port:" << port;
         return;
@@ -231,35 +256,40 @@ void UDPConfiguration::removeHost(const QString &host, quint16 port)
 void UDPConfiguration::_updateHostList()
 {
     _hostList.clear();
-    for (const std::shared_ptr<UDPClient> &target : _targetHosts) {
-        const QString host = target->address.toString() + ":" + QString::number(target->port);
+
+    for (const auto &target : _targetHosts) {
+        const QString displayHost = target->hostString;
+        const QString host = displayHost + ":" + QString::number(target->port);
         _hostList.append(host);
     }
 
     emit hostListChanged();
 }
 
-QString UDPConfiguration::_getIpAddress(const QString &address)
+
+
+QString UDPConfiguration::getIpAddress(const QString &host) const
 {
-    const QHostAddress host(address);
-    if (!host.isNull()) {
-        return address;
+    const QHostAddress direct(host);
+    if (!direct.isNull()) {
+        return host;
     }
 
-    const QHostInfo info = QHostInfo::fromName(address);
+    const QHostInfo info = QHostInfo::fromName(host);
     if (info.error() != QHostInfo::NoError) {
         return QString();
     }
 
-    const QList<QHostAddress> hostAddresses = info.addresses();
-    for (const QHostAddress &hostAddress : hostAddresses) {
-        if (hostAddress.protocol() == QAbstractSocket::NetworkLayerProtocol::IPv4Protocol) {
-            return hostAddress.toString();
+    for (const QHostAddress &addr : info.addresses()) {
+        if (addr.protocol() == QAbstractSocket::IPv4Protocol) {
+            return addr.toString();
         }
     }
 
     return QString();
 }
+
+
 
 /*===========================================================================*/
 

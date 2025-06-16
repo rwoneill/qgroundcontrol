@@ -43,6 +43,7 @@ struct UDPClient
     explicit UDPClient(const UDPClient *other)
         : address(other->address)
         , port(other->port)
+        , hostString(other->hostString) 
     {}
 
     bool operator==(const UDPClient &other) const
@@ -60,6 +61,7 @@ struct UDPClient
 
     QHostAddress address;
     quint16 port = 0;
+    QString hostString; 
 };
 
 /*===========================================================================*/
@@ -93,6 +95,7 @@ public:
     QList<std::shared_ptr<UDPClient>> targetHosts() const { return _targetHosts; }
     quint16 localPort() const { return _localPort; }
     void setLocalPort(quint16 port) { if (port != _localPort) { _localPort = port; emit localPortChanged(); } }
+    Q_INVOKABLE QString getIpAddress(const QString &host) const;
 
 signals:
     void hostListChanged();
@@ -100,8 +103,6 @@ signals:
 
 private:
     void _updateHostList();
-
-    static QString _getIpAddress(const QString &address);
 
     QStringList _hostList;
     QList<std::shared_ptr<UDPClient>> _targetHosts;
