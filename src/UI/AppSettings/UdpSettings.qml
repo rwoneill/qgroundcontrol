@@ -78,7 +78,6 @@ ColumnLayout {
             }
         }
 
-
             QGCButton {
                 text: qsTr("Remove")
                 onClicked: {

@@ -95,14 +95,12 @@ void UDPConfiguration::copyFrom(const LinkConfiguration *source)
     _targetHosts.clear();
 
     for (const std::shared_ptr<UDPClient> &target : udpSource->targetHosts()) {
-
         if (!containsTarget(_targetHosts, target->address, target->port)) {
             auto client = std::make_shared<UDPClient>(target.get());
             client->hostString = target->hostString;
             _targetHosts.append(client);
         } 
     }
-
     _updateHostList(); 
 }
 
@@ -112,7 +110,7 @@ void UDPConfiguration::loadSettings(QSettings &settings, const QString &root)
     settings.beginGroup(root);
 
     setLocalPort(static_cast<quint16>(
-        settings.value("port", SettingsManager::instance()->autoConnectSettings()->udpListenPort()->rawValue().toUInt()).toUInt()
+        settings.value("port", SettingsManager::instance()->autoConnectSettings()->udpListenPort()->rawValue().toUInt())
     ));
 
     _targetHosts.clear();
@@ -126,10 +124,10 @@ void UDPConfiguration::loadSettings(QSettings &settings, const QString &root)
             continue;
         }
 
-        QString savedHost = settings.value(hkey).toString();
-        quint16 port = static_cast<quint16>(settings.value(pkey).toUInt());
-        QString ipAdd = getIpAddress(savedHost);
-        QHostAddress address = ipAdd.isEmpty()
+        const QString savedHost = settings.value(hkey).toString();
+        const quint16 port = static_cast<quint16>(settings.value(pkey).toUInt());
+        const QString ipAdd = getIpAddress(savedHost);
+        const QHostAddress address = ipAdd.isEmpty()
             ? QHostAddress("0.0.0.0")
             : QHostAddress(ipAdd);
 
@@ -141,10 +139,6 @@ void UDPConfiguration::loadSettings(QSettings &settings, const QString &root)
     _updateHostList();
     settings.endGroup();
 }
-
-
-
-
 
 void UDPConfiguration::saveSettings(QSettings &settings, const QString &root) const
 {
@@ -163,7 +157,6 @@ void UDPConfiguration::saveSettings(QSettings &settings, const QString &root) co
 
     settings.endGroup();
 }
-
 
 void UDPConfiguration::addHost(const QString &host)
 {
@@ -185,8 +178,8 @@ void UDPConfiguration::addHost(const QString &host)
 
 void UDPConfiguration::addHost(const QString &host, quint16 port)
 {
-    QString ipAdd = getIpAddress(host);
-    QHostAddress address = ipAdd.isEmpty() ? QHostAddress("0.0.0.0") : QHostAddress(ipAdd);
+    const QString ipAdd = getIpAddress(host);
+    const QHostAddress address = ipAdd.isEmpty() ? QHostAddress("0.0.0.0") : QHostAddress(ipAdd);
 
     if (!containsTarget(_targetHosts, address, port)) {
         auto client = std::make_shared<UDPClient>(address, port);
@@ -195,9 +188,6 @@ void UDPConfiguration::addHost(const QString &host, quint16 port)
         _updateHostList();
     }
 }
-
-
-
 
 void UDPConfiguration::removeHost(const QString &host)
 {
@@ -266,14 +256,12 @@ void UDPConfiguration::_updateHostList()
     emit hostListChanged();
 }
 
-
-
 QString UDPConfiguration::getIpAddress(const QString &host) const
 {
     const QHostAddress direct(host);
     if (!direct.isNull()) {
         return host;
-    }
+    }   
 
     const QHostInfo info = QHostInfo::fromName(host);
     if (info.error() != QHostInfo::NoError) {
@@ -288,8 +276,6 @@ QString UDPConfiguration::getIpAddress(const QString &host) const
 
     return QString();
 }
-
-
 
 /*===========================================================================*/
 
