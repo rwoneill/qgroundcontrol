@@ -110,7 +110,7 @@ void UDPConfiguration::loadSettings(QSettings &settings, const QString &root)
     settings.beginGroup(root);
 
     setLocalPort(static_cast<quint16>(
-        settings.value("port", SettingsManager::instance()->autoConnectSettings()->udpListenPort()->rawValue().toUInt())
+        settings.value("port", SettingsManager::instance()->autoConnectSettings()->udpListenPort()->rawValue().toUInt()).toUInt()
     ));
 
     _targetHosts.clear();
