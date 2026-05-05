@@ -26,6 +26,13 @@ public:
     ///     @param altChangeOnly true: only altitude change, false: lat/lon/alt change
     void writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly);
 
+    /// Writes a guided mission item using MISSION_ITEM_INT with a caller-specified altitude frame.
+    /// Mirrors the wire format Mission Planner uses for terrain-frame guided commands.
+    ///     @param gotoCoord  Coordinate to move to (altitude interpreted in the given frame)
+    ///     @param frame      MAV_FRAME value (e.g. MAV_FRAME_GLOBAL_TERRAIN_ALT = 10)
+    ///     @param altChangeOnly true: only altitude change, false: lat/lon/alt change
+    void writeArduPilotGuidedMissionItemInt(const QGeoCoordinate& gotoCoord, uint8_t frame, bool altChangeOnly);
+
     /// Generates a new mission which starts from the specified index. It will include all the CMD_DO items
     /// from mission start to resumeIndex in the generate mission.
     void generateResumeMission(int resumeIndex);

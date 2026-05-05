@@ -136,6 +136,14 @@
             "default": true,
             "label": "Enable automatic mission start/resume popups",
             "keywords": "mission popup"
+        },
+        {
+            "name": "useGuidedTerrainFrame",
+            "shortDesc": "Send guided Go To Location commands in the terrain altitude frame (ArduPilot only). Altitudes are interpreted as height above ground at the destination.",
+            "type": "bool",
+            "default": false,
+            "label": "Use Terrain Frame in Guided Mode (ArduPilot)",
+            "keywords": "guided,terrain,frame,goto,go to,ardupilot"
         }
     ]
 }

@@ -42,7 +42,7 @@
         },
         {
             "heading": "Guided Commands",
-            "keywords": ["altitude", "guided", "minimum", "maximum", "goto", "go to", "loiter radius", "confirmation"],
+            "keywords": ["altitude", "guided", "minimum", "maximum", "goto", "go to", "loiter radius", "confirmation", "terrain", "frame"],
             "controls": [
                 {
                     "setting": "flyViewSettings.guidedMinimumAltitude"
@@ -58,6 +58,9 @@
                 },
                 {
                     "setting": "flyViewSettings.goToLocationRequiresConfirmInGuided"
+                },
+                {
+                    "setting": "flyViewSettings.useGuidedTerrainFrame"
                 }
             ]
         },
