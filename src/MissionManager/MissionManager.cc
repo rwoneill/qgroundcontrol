@@ -95,6 +95,51 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     emit inProgressChanged(true);
 }
 
+void MissionManager::writeArduPilotGuidedMissionItemInt(const QGeoCoordinate& gotoCoord, uint8_t frame, bool altChangeOnly)
+{
+    if (inProgress()) {
+        qCDebug(MissionManagerLog) << "writeArduPilotGuidedMissionItemInt called while transaction in progress";
+        return;
+    }
+
+    _transactionInProgress = TransactionWrite;
+
+    _connectToMavlink();
+
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
+        mavlink_message_t           messageOut;
+        mavlink_mission_item_int_t  missionItem;
+
+        memset(&missionItem, 0, sizeof(missionItem));
+        missionItem.target_system =     _vehicle->id();
+        missionItem.target_component =  _vehicle->defaultComponentId();
+        missionItem.seq =               0;
+        missionItem.command =           MAV_CMD_NAV_WAYPOINT;
+        missionItem.param1 =            0;
+        missionItem.param2 =            0;
+        missionItem.param3 =            0;
+        missionItem.param4 =            0;
+        // MISSION_ITEM_INT uses int32 lat/lon scaled by 1e7
+        missionItem.x =                 static_cast<int32_t>(gotoCoord.latitude() * 1e7);
+        missionItem.y =                 static_cast<int32_t>(gotoCoord.longitude() * 1e7);
+        missionItem.z =                 static_cast<float>(gotoCoord.altitude());
+        missionItem.frame =             frame;
+        missionItem.current =           altChangeOnly ? 3 : 2;
+        missionItem.autocontinue =      true;
+
+        mavlink_msg_mission_item_int_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
+                                                 MAVLinkProtocol::getComponentId(),
+                                                 sharedLink->mavlinkChannel(),
+                                                 &messageOut,
+                                                 &missionItem);
+
+        _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), messageOut);
+    }
+    _startAckTimeout(AckGuidedItem);
+    emit inProgressChanged(true);
+}
+
 void MissionManager::generateResumeMission(int resumeIndex)
 {
     if (_vehicle->isOfflineEditingVehicle()) {
