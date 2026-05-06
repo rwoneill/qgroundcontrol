@@ -136,13 +136,11 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
         // name. Also we want to run unit tests with clean settings every time.
         applicationName = QStringLiteral("%1_unittest").arg(QGC_APP_NAME);
     } else {
-#ifdef QGC_DAILY_BUILD
-        // This gives daily builds their own separate settings space. Allowing you to use daily and stable builds
-        // side by side without daily screwing up your stable settings.
-        applicationName = QStringLiteral("%1 Daily").arg(QGC_APP_NAME);
-#else
-        applicationName = QGC_APP_NAME;
-#endif
+        // OI custom build: tag the application name so the corner label and any
+        // version dialogs make it obvious this isn't an upstream build. This
+        // also gives the build its own QSettings namespace so it doesn't clash
+        // with any side-installed upstream QGC.
+        applicationName = QStringLiteral("%1 OI Build").arg(QGC_APP_NAME);
     }
     setApplicationName(applicationName);
     setOrganizationName(QGC_ORG_NAME);
