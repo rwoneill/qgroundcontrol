@@ -993,15 +993,24 @@ void APMFirmwarePlugin::guidedModeSetHeadingHold(Vehicle *vehicle, double headin
     }
 
     // HEADING_TYPE_HEADING commands a compass heading (not course-over-ground),
-    // so the hold remains usable in GPS-denied flight. Sent once; ArduPlane holds
-    // the heading until a mode change or another guided command supersedes it.
+    // so the hold remains usable in GPS-denied flight. Sent once; ArduPlane keeps
+    // the heading until the operator changes flight mode (which clears the guided
+    // heading state). A subsequent guided position command does NOT override it.
+    //
+    // param3 is the heading-change centripetal-acceleration limit (m/s/s).
+    // ArduPlane converts it to a bank-angle ceiling, bank = atan(param3 / g),
+    // then caps that at the vehicle's ROLL_LIMIT_DEG. A value of 0 is clamped by
+    // the firmware to 0.05 m/s/s, i.e. a ~0.3 deg bank ceiling - the vehicle
+    // cannot turn at all. ~6 m/s/s yields a ~31 deg ceiling for a normal
+    // heading-select turn (further limited by ROLL_LIMIT_DEG if that is lower).
+    const float headingAccelLimit = 6.0f;
     vehicle->sendMavCommand(
         vehicle->defaultComponentId(),
         MAV_CMD_GUIDED_CHANGE_HEADING,
         true,                                   // showError
         HEADING_TYPE_HEADING,                   // param1: heading type
         static_cast<float>(headingDegrees),     // param2: target heading (deg)
-        0                                       // param3: heading rate (0 = firmware default)
+        headingAccelLimit                       // param3: heading accel limit (bank ceiling)
     );
 }
 
