@@ -240,6 +240,8 @@ public:
     Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Takeoff supported
     Q_PROPERTY(bool     guidedTakeoffSupported  READ guidedTakeoffSupported                         CONSTANT)                   ///< Guided takeoff supported
     Q_PROPERTY(bool     changeHeadingSupported  READ changeHeadingSupported                         CONSTANT)                   ///< Change Heading supported
+    Q_PROPERTY(bool     headingHoldEngaged      READ headingHoldEngaged                             NOTIFY headingHoldChanged)  ///< Guided heading hold engaged
+    Q_PROPERTY(double   headingHoldTarget       READ headingHoldTarget                              NOTIFY headingHoldChanged)  ///< Guided heading hold target (deg)
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
     Q_PROPERTY(bool     haveMRSpeedLimits       READ haveMRSpeedLimits                              NOTIFY haveMRSpeedLimChanged)
     Q_PROPERTY(bool     haveFWSpeedLimits       READ haveFWSpeedLimits                              NOTIFY haveFWSpeedLimChanged)
@@ -324,6 +326,13 @@ public:
     /// Command vehicle to change yaw
     ///     @param coordinate to rotate towards
     Q_INVOKABLE void guidedModeChangeHeading(const QGeoCoordinate &headingCoord);
+
+    /// Engage or update guided heading hold (ArduPlane). Sends MAV_CMD_GUIDED_CHANGE_HEADING once.
+    ///     @param headingDegrees Target compass heading
+    Q_INVOKABLE void guidedModeSetHeadingHold(double headingDegrees);
+
+    /// Disengage guided heading hold. Clears UI state only, sends no command.
+    Q_INVOKABLE void clearHeadingHold(void);
 
     /// Command vehicle to change groundspeed
     ///     @param groundspeed Target horizontal groundspeed
@@ -423,6 +432,8 @@ public:
     bool    takeoffVehicleSupported () const;
     bool    guidedTakeoffSupported  () const;
     bool    changeHeadingSupported  () const;
+    bool    headingHoldEngaged      () const { return _headingHoldEngaged; }
+    double  headingHoldTarget       () const { return _headingHoldTarget; }
     QString gotoFlightMode          () const;
     bool    hasGripper              () const;
     bool haveMRSpeedLimits() const { return _multirotor_speed_limits_available; }
@@ -875,6 +886,7 @@ signals:
     void requiresGpsFixChanged          ();
     void haveMRSpeedLimChanged          ();
     void haveFWSpeedLimChanged          ();
+    void headingHoldChanged             ();
 
     void firmwareVersionChanged         ();
     void firmwareCustomVersionChanged   ();
@@ -1227,6 +1239,10 @@ private:
     // these flags are used to determine if the speed change action from fly view should be shown
     bool _multirotor_speed_limits_available = false;
     bool _fixed_wing_airspeed_limits_available = false;
+
+    // Guided heading hold UI/command state
+    bool   _headingHoldEngaged = false;
+    double _headingHoldTarget  = 0;
 
     // FactGroup facts
 

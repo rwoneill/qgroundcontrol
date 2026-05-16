@@ -183,6 +183,13 @@ void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordin
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
+void FirmwarePlugin::guidedModeSetHeadingHold(Vehicle *vehicle, double headingDegrees) const
+{
+    Q_UNUSED(vehicle);
+    Q_UNUSED(headingDegrees);
+    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+}
+
 void FirmwarePlugin::startTakeoff(Vehicle*) const
 {
     // Not supported by generic vehicle

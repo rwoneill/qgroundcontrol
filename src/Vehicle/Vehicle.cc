@@ -2316,6 +2316,31 @@ void Vehicle::guidedModeChangeHeading(const QGeoCoordinate &headingCoord)
     _firmwarePlugin->guidedModeChangeHeading(this, headingCoord);
 }
 
+void Vehicle::guidedModeSetHeadingHold(double headingDegrees)
+{
+    // Normalize to 0..360
+    while (headingDegrees < 0.0) {
+        headingDegrees += 360.0;
+    }
+    while (headingDegrees >= 360.0) {
+        headingDegrees -= 360.0;
+    }
+
+    _firmwarePlugin->guidedModeSetHeadingHold(this, headingDegrees);
+
+    _headingHoldTarget = headingDegrees;
+    _headingHoldEngaged = true;
+    emit headingHoldChanged();
+}
+
+void Vehicle::clearHeadingHold(void)
+{
+    if (_headingHoldEngaged) {
+        _headingHoldEngaged = false;
+        emit headingHoldChanged();
+    }
+}
+
 void Vehicle::pauseVehicle()
 {
     if (!pauseVehicleSupported()) {

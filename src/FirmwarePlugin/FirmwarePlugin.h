@@ -189,6 +189,10 @@ public:
     /// Command vehicle to rotate towards specified location.
     virtual void guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord) const;
 
+    /// Command vehicle to hold the specified compass heading in guided mode.
+    ///     @param headingDegrees Target compass heading
+    virtual void guidedModeSetHeadingHold(Vehicle *vehicle, double headingDegrees) const;
+
     /// @return The minimum takeoff altitude (relative) for guided takeoff.
     virtual double minimumTakeoffAltitudeMeters(Vehicle* /*vehicle*/) const { return 3.048; }
 

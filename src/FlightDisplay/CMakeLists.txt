@@ -41,6 +41,7 @@ qt_add_qml_module(FlightDisplayModule
         GuidedActionTakeoff.qml
         GuidedToolStripAction.qml
         GuidedValueSlider.qml
+        HeadingHoldControl.qml
         MultiRotorChecklist.qml
         MultiVehicleList.qml
         ObstacleDistanceOverlay.qml

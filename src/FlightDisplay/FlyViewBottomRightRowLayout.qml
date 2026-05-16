@@ -13,6 +13,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightDisplay
+import QGroundControl.ScreenTools
 
 RowLayout {
     TelemetryValuesBar {
@@ -22,9 +23,21 @@ RowLayout {
         specificVehicleForCard: null // Tracks active vehicle
     }
 
-    FlyViewInstrumentPanel {
-        id:                 instrumentPanel
+    ColumnLayout {
         Layout.alignment:   Qt.AlignBottom
-        visible:            QGroundControl.corePlugin.options.flyView.showInstrumentPanel && _showSingleVehicleUI
+        spacing:            ScreenTools.defaultFontPixelHeight / 4
+
+        // OI Build: guided heading-hold buttons, sitting directly above the
+        // instrument panel (artificial horizon + compass).
+        HeadingHoldControl {
+            Layout.alignment:   Qt.AlignHCenter
+            visible:            instrumentPanel.visible
+        }
+
+        FlyViewInstrumentPanel {
+            id:                 instrumentPanel
+            Layout.alignment:   Qt.AlignBottom
+            visible:            QGroundControl.corePlugin.options.flyView.showInstrumentPanel && _showSingleVehicleUI
+        }
     }
 }

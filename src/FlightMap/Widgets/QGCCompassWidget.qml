@@ -144,6 +144,31 @@ Rectangle {
                 y: translateCenterToAngleY(parent.height / 2, _angle)
             }
         }
+
+        // OI Build: guided heading-hold bug. Sits on the dial rim at the
+        // commanded heading whenever heading hold is engaged.
+        Item {
+            id:             headingHoldBug
+            anchors.fill:   parent
+            visible:        root.vehicle && !root.usedByMultipleVehicleList && root.vehicle.headingHoldEngaged
+
+            Rectangle {
+                width:                      root.size * 0.09
+                height:                     root.size * 0.055
+                radius:                     2
+                color:                      "#00E5FF"
+                border.color:               "#101010"
+                border.width:               1
+                anchors.horizontalCenter:   parent.horizontalCenter
+                y:                          root.size * 0.012
+            }
+
+            transform: Rotation {
+                origin.x:   headingHoldBug.width  / 2
+                origin.y:   headingHoldBug.height / 2
+                angle:      root.vehicle ? root.vehicle.headingHoldTarget : 0
+            }
+        }
     }
 
     QGCLabel {

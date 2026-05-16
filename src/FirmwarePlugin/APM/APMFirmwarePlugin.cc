@@ -983,6 +983,28 @@ void APMFirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoor
     );
 }
 
+void APMFirmwarePlugin::guidedModeSetHeadingHold(Vehicle *vehicle, double headingDegrees) const
+{
+    // MAV_CMD_GUIDED_CHANGE_HEADING is an ArduPlane GUIDED-mode command. It is not
+    // handled by ArduCopter, so restrict it to fixed-wing and VTOL (QuadPlane) airframes.
+    if (!vehicle->fixedWing() && !vehicle->vtol()) {
+        qgcApp()->showAppMessage(tr("Heading hold is only supported on ArduPlane vehicles."));
+        return;
+    }
+
+    // HEADING_TYPE_HEADING commands a compass heading (not course-over-ground),
+    // so the hold remains usable in GPS-denied flight. Sent once; ArduPlane holds
+    // the heading until a mode change or another guided command supersedes it.
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_GUIDED_CHANGE_HEADING,
+        true,                                   // showError
+        HEADING_TYPE_HEADING,                   // param1: heading type
+        static_cast<float>(headingDegrees),     // param2: target heading (deg)
+        0                                       // param3: heading rate (0 = firmware default)
+    );
+}
+
 double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle) const
 {
     double minTakeoffAlt = 0;
