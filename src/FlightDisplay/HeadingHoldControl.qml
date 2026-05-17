@@ -13,55 +13,81 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.ScreenTools
 
-// OI Build: guided heading-hold control strip, shown above the instrument panel.
+// OI Build: guided control strip shown above the instrument panel.
 //
-// ENGAGE captures the vehicle's current compass heading and sends it once via
-// MAV_CMD_GUIDED_CHANGE_HEADING (ArduPlane). The arrow buttons nudge the held
-// heading and re-send, once per press. There is no periodic resend - a mode
-// change or another guided command on the vehicle naturally supersedes the hold.
-Row {
+// Row 1 - heading hold: ENGAGE captures the vehicle's current compass heading
+// and sends it once via MAV_CMD_GUIDED_CHANGE_HEADING (ArduPlane). The arrow
+// buttons nudge the held heading and re-send, once per press.
+//
+// Row 2 - altitude bump: each press changes the guided altitude target by a
+// fixed step via guidedModeChangeAltitude (a relative LOCAL_OFFSET_NED delta -
+// no altitude frame involved, it is just "go up/down N metres from here").
+Column {
     id:         control
-    spacing:    ScreenTools.defaultFontPixelWidth / 2
+    spacing:    ScreenTools.defaultFontPixelHeight / 4
 
     property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
     property bool _engaged:         _activeVehicle ? _activeVehicle.headingHoldEngaged : false
 
-    // Heading change applied per arrow-button press.
+    // Heading change per arrow press, altitude change per bump press.
     readonly property real _stepDegrees: 5
+    readonly property real _stepMeters:  10
 
     visible: _activeVehicle
 
-    function _sendRelative(deltaDegrees) {
+    function _sendRelativeHeading(deltaDegrees) {
         if (_activeVehicle && _activeVehicle.headingHoldEngaged) {
             _activeVehicle.guidedModeSetHeadingHold(_activeVehicle.headingHoldTarget + deltaDegrees)
         }
     }
 
-    QGCButton {
-        text:       qsTr("-%1°").arg(control._stepDegrees)
-        enabled:    control._engaged
-        onClicked:  control._sendRelative(-control._stepDegrees)
-    }
+    // --- Heading-hold row ---
+    Row {
+        anchors.horizontalCenter:   parent.horizontalCenter
+        spacing:                    ScreenTools.defaultFontPixelWidth / 2
 
-    QGCButton {
-        text: control._engaged
-              ? qsTr("HDG %1°").arg(control._activeVehicle ? control._activeVehicle.headingHoldTarget.toFixed(0) : "0")
-              : qsTr("HDG HOLD")
-        onClicked: {
-            if (!control._activeVehicle) {
-                return
+        QGCButton {
+            text:       qsTr("-%1°").arg(control._stepDegrees)
+            enabled:    control._engaged
+            onClicked:  control._sendRelativeHeading(-control._stepDegrees)
+        }
+
+        QGCButton {
+            text: control._engaged
+                  ? qsTr("HDG %1°").arg(control._activeVehicle ? control._activeVehicle.headingHoldTarget.toFixed(0) : "0")
+                  : qsTr("HDG HOLD")
+            onClicked: {
+                if (!control._activeVehicle) {
+                    return
+                }
+                if (control._activeVehicle.headingHoldEngaged) {
+                    control._activeVehicle.clearHeadingHold()
+                } else {
+                    control._activeVehicle.guidedModeSetHeadingHold(control._activeVehicle.heading.rawValue)
+                }
             }
-            if (control._activeVehicle.headingHoldEngaged) {
-                control._activeVehicle.clearHeadingHold()
-            } else {
-                control._activeVehicle.guidedModeSetHeadingHold(control._activeVehicle.heading.rawValue)
-            }
+        }
+
+        QGCButton {
+            text:       qsTr("+%1°").arg(control._stepDegrees)
+            enabled:    control._engaged
+            onClicked:  control._sendRelativeHeading(control._stepDegrees)
         }
     }
 
-    QGCButton {
-        text:       qsTr("+%1°").arg(control._stepDegrees)
-        enabled:    control._engaged
-        onClicked:  control._sendRelative(control._stepDegrees)
+    // --- Altitude-bump row ---
+    Row {
+        anchors.horizontalCenter:   parent.horizontalCenter
+        spacing:                    ScreenTools.defaultFontPixelWidth / 2
+
+        QGCButton {
+            text:       qsTr("ALT -%1 m").arg(control._stepMeters)
+            onClicked:  if (control._activeVehicle) { control._activeVehicle.guidedModeChangeAltitude(-control._stepMeters, false) }
+        }
+
+        QGCButton {
+            text:       qsTr("ALT +%1 m").arg(control._stepMeters)
+            onClicked:  if (control._activeVehicle) { control._activeVehicle.guidedModeChangeAltitude(control._stepMeters, false) }
+        }
     }
 }
