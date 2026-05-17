@@ -46,6 +46,9 @@ VehicleFactGroup::VehicleFactGroup(QObject *parent)
     _addFact(&_hobbsFact);
     _addFact(&_throttlePctFact);
     _addFact(&_imuTempFact);
+    _addFact(&_xAccFact);
+    _addFact(&_yAccFact);
+    _addFact(&_zAccFact);
 
     _hobbsFact.setRawValue(QStringLiteral("0000:00:00"));
 }
@@ -116,6 +119,12 @@ void VehicleFactGroup::_handleAttitude(Vehicle *vehicle, const mavlink_message_t
     mavlink_msg_attitude_decode(&message, &attitude);
 
     _handleAttitudeWorker(attitude.roll, attitude.pitch, attitude.yaw);
+
+    // ArduPilot sends ATTITUDE (not ATTITUDE_QUATERNION), so populate the body
+    // rates here too - the PFD turn-rate indicator depends on yawRate.
+    rollRate()->setRawValue(qRadiansToDegrees(attitude.rollspeed));
+    pitchRate()->setRawValue(qRadiansToDegrees(attitude.pitchspeed));
+    yawRate()->setRawValue(qRadiansToDegrees(attitude.yawspeed));
 
     _setTelemetryAvailable(true);
 }
@@ -207,6 +216,12 @@ void VehicleFactGroup::_handleRawImuTemp(const mavlink_message_t &message)
     mavlink_msg_raw_imu_decode(&message, &imuRaw);
 
     imuTemp()->setRawValue((imuRaw.temperature == 0) ? 0 : (imuRaw.temperature * 0.01));
+
+    // Accelerometer specific force, reported in mg -> convert to g.
+    // yAcc (body lateral) drives the PFD slip/skid indicator.
+    xAcc()->setRawValue(imuRaw.xacc / 1000.0);
+    yAcc()->setRawValue(imuRaw.yacc / 1000.0);
+    zAcc()->setRawValue(imuRaw.zacc / 1000.0);
 
     _setTelemetryAvailable(true);
 }

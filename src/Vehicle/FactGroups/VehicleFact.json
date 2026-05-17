@@ -163,6 +163,27 @@
     "shortDesc": "Imu temperature",
     "type":             "int16",
     "units":            "°C"
+},
+{
+    "name":             "xAcc",
+    "shortDesc":        "Acceleration X (body fwd)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "g"
+},
+{
+    "name":             "yAcc",
+    "shortDesc":        "Acceleration Y (lateral)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "g"
+},
+{
+    "name":             "zAcc",
+    "shortDesc":        "Acceleration Z (body down)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "g"
 }
 ]
 }

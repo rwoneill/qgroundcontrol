@@ -85,9 +85,9 @@
     "name":         "instrumentQmlFile2",
     "shortDesc":    "Qml file for instrument panel",
     "type":         "string",
-    "enumStrings":  "Integrated Compass & Attitude,Horizontal Compass & Attitude,Large Vertical",
-    "enumValues":   "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/HorizontalCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/VerticalCompassAttitude.qml",
-    "default":      "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml"
+    "enumStrings":  "OI Primary Flight Display,Integrated Compass & Attitude,Horizontal Compass & Attitude,Large Vertical",
+    "enumValues":   "qrc:/qml/QGroundControl/FlightMap/Widgets/OIPrimaryFlightDisplay.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/HorizontalCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/VerticalCompassAttitude.qml",
+    "default":      "qrc:/qml/QGroundControl/FlightMap/Widgets/OIPrimaryFlightDisplay.qml"
 },
 {
     "name":         "requestControlAllowTakeover",

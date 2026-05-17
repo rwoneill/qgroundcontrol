@@ -42,6 +42,9 @@ class VehicleFactGroup : public FactGroup
     Q_PROPERTY(Fact *hobbs                  READ hobbs                  CONSTANT)
     Q_PROPERTY(Fact *throttlePct            READ throttlePct            CONSTANT)
     Q_PROPERTY(Fact *imuTemp                READ imuTemp                CONSTANT)
+    Q_PROPERTY(Fact *xAcc                   READ xAcc                   CONSTANT)
+    Q_PROPERTY(Fact *yAcc                   READ yAcc                   CONSTANT)
+    Q_PROPERTY(Fact *zAcc                   READ zAcc                   CONSTANT)
 
 public:
     explicit VehicleFactGroup(QObject *parent = nullptr);
@@ -74,6 +77,9 @@ public:
     Fact *hobbs() { return &_hobbsFact; }
     Fact *throttlePct() { return &_throttlePctFact; }
     Fact *imuTemp() { return &_imuTempFact; }
+    Fact *xAcc() { return &_xAccFact; }
+    Fact *yAcc() { return &_yAccFact; }
+    Fact *zAcc() { return &_zAccFact; }
 
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) override;
 
@@ -117,6 +123,9 @@ protected:
     Fact _hobbsFact = Fact(0, QStringLiteral("hobbs"), FactMetaData::valueTypeString);
     Fact _throttlePctFact = Fact(0, QStringLiteral("throttlePct"), FactMetaData::valueTypeUint16);
     Fact _imuTempFact = Fact(0, QStringLiteral("imuTemp"), FactMetaData::valueTypeInt16);
+    Fact _xAccFact = Fact(0, QStringLiteral("xAcc"), FactMetaData::valueTypeDouble);
+    Fact _yAccFact = Fact(0, QStringLiteral("yAcc"), FactMetaData::valueTypeDouble);
+    Fact _zAccFact = Fact(0, QStringLiteral("zAcc"), FactMetaData::valueTypeDouble);
 
     float _altitudeTuningOffset = qQNaN();
 

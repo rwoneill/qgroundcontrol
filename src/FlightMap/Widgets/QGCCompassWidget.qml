@@ -40,6 +40,7 @@ Rectangle {
     property var  _flyViewSettings:             QGroundControl.settingsManager.flyViewSettings
     property bool _showAdditionalIndicators:    _flyViewSettings.showAdditionalIndicatorsCompass.value && !usedByMultipleVehicleList
     property bool _lockNoseUpCompass:           _flyViewSettings.lockNoseUpCompass.value && !usedByMultipleVehicleList
+    property bool _headingHoldEngaged:          vehicle && !usedByMultipleVehicleList && vehicle.headingHoldEngaged
 
     function showCOG(){
         if (_groundSpeed < 0.5) {
@@ -55,14 +56,6 @@ Rectangle {
 
     function showHeadingToNextWP() {
         return vehicle && _showAdditionalIndicators && !isNaN(_headingToNextWP)
-    }
-
-    function translateCenterToAngleX(radius, angle) {
-        return radius * Math.sin(angle * (Math.PI / 180))
-    } 
-
-    function translateCenterToAngleY(radius, angle) {
-        return -radius * Math.cos(angle * (Math.PI / 180))
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -120,53 +113,90 @@ Rectangle {
             }
         }
 
-        // Launch location indicator
-        Rectangle {
-            width:              Math.max(label.contentWidth, label.contentHeight)
-            height:             width
-            color:              qgcPal.mapIndicator
-            radius:             width / 2
-            anchors.centerIn:   parent
-            visible:            showHeadingHome()
+        // Launch (home) location indicator.
+        // OI Build fix: this previously used a Translate whose radius was half
+        // the tiny "L" marker's own width, so the marker never left the centre
+        // of the dial. It now uses a full-size rotating Item - the same method
+        // as the course-over-ground and next-waypoint pointers - so the marker
+        // correctly rides the dial rim at the bearing toward home.
+        Item {
+            id:             launchIndicator
+            anchors.fill:   parent
+            visible:        showHeadingHome()
 
-            QGCLabel {
-                id:                 label
-                text:               qsTr("L")
-                font.bold:          true
-                color:              qgcPal.text
-                anchors.centerIn:   parent
+            Rectangle {
+                width:                      Math.max(launchLabel.contentWidth, launchLabel.contentHeight) * 1.7
+                height:                     width
+                radius:                     width / 2
+                color:                      qgcPal.mapIndicator
+                border.color:               qgcPal.text
+                border.width:               1
+                anchors.horizontalCenter:   parent.horizontalCenter
+                y:                          root.size * 0.05
+
+                QGCLabel {
+                    id:                 launchLabel
+                    text:               qsTr("L")
+                    font.bold:          true
+                    color:              qgcPal.text
+                    anchors.centerIn:   parent
+                }
             }
 
-            transform: Translate {
-                property double _angle: _headingToHome
-
-                x: translateCenterToAngleX(parent.width / 2, _angle)
-                y: translateCenterToAngleY(parent.height / 2, _angle)
+            transform: Rotation {
+                origin.x:   launchIndicator.width  / 2
+                origin.y:   launchIndicator.height / 2
+                angle:      _headingToHome
             }
         }
 
-        // OI Build: guided heading-hold bug. Sits on the dial rim at the
-        // commanded heading whenever heading hold is engaged.
+        // OI Build: guided heading-hold bug - a cyan heading-bug marker that
+        // rides the dial rim at the commanded heading while heading hold is on.
         Item {
             id:             headingHoldBug
             anchors.fill:   parent
-            visible:        root.vehicle && !root.usedByMultipleVehicleList && root.vehicle.headingHoldEngaged
+            visible:        _headingHoldEngaged
 
-            Rectangle {
-                width:                      root.size * 0.09
-                height:                     root.size * 0.055
-                radius:                     2
-                color:                      "#00E5FF"
-                border.color:               "#101010"
-                border.width:               1
+            Item {
+                id:                         bugShape
+                width:                      root.size * 0.13
+                height:                     root.size * 0.072
                 anchors.horizontalCenter:   parent.horizontalCenter
-                y:                          root.size * 0.012
+                y:                          root.size * 0.006
+
+                Rectangle {     // top bar
+                    anchors.top:    parent.top
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    height:         root.size * 0.022
+                    color:          "#00E5FF"
+                    border.color:   "#101010"
+                    border.width:   1
+                }
+                Rectangle {     // left prong
+                    anchors.top:    parent.top
+                    anchors.left:   parent.left
+                    width:          root.size * 0.026
+                    height:         parent.height
+                    color:          "#00E5FF"
+                    border.color:   "#101010"
+                    border.width:   1
+                }
+                Rectangle {     // right prong
+                    anchors.top:    parent.top
+                    anchors.right:  parent.right
+                    width:          root.size * 0.026
+                    height:         parent.height
+                    color:          "#00E5FF"
+                    border.color:   "#101010"
+                    border.width:   1
+                }
             }
 
             transform: Rotation {
                 origin.x:   headingHoldBug.width  / 2
                 origin.y:   headingHoldBug.height / 2
-                angle:      root.vehicle ? root.vehicle.headingHoldTarget : 0
+                angle:      vehicle ? vehicle.headingHoldTarget : 0
             }
         }
     }
@@ -175,6 +205,18 @@ Rectangle {
         anchors.horizontalCenter:   parent.horizontalCenter
         y:                          size * 0.74
         text:                       vehicle && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
+        horizontalAlignment:        Text.AlignHCenter
+    }
+
+    // OI Build: commanded heading readout, cyan to match the heading-hold bug.
+    QGCLabel {
+        anchors.horizontalCenter:   parent.horizontalCenter
+        y:                          size * 0.85
+        visible:                    _headingHoldEngaged
+        text:                       vehicle ? vehicle.headingHoldTarget.toFixed(0) + "°" : ""
+        color:                      "#00E5FF"
+        font.bold:                  true
+        font.pointSize:             ScreenTools.defaultFontPointSize * _sizeRatio * 0.9
         horizontalAlignment:        Text.AlignHCenter
     }
 }
