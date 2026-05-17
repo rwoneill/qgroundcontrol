@@ -37,7 +37,6 @@ SettingsPage {
     property Fact   _maxGoToLocationDistance:               _flyViewSettings.maxGoToLocationDistance
     property Fact   _forwardFlightGoToLocationLoiterRad:    _flyViewSettings.forwardFlightGoToLocationLoiterRad
     property Fact   _goToLocationRequiresConfirmInGuided:   _flyViewSettings.goToLocationRequiresConfirmInGuided
-    property Fact   _useGuidedTerrainFrame:                 _flyViewSettings.useGuidedTerrainFrame
     property var    _viewer3DSettings:                      _settingsManager.viewer3DSettings
     property Fact   _viewer3DEnabled:                       _viewer3DSettings.enabled
     property Fact   _viewer3DOsmFilePath:                   _viewer3DSettings.osmFilePath
@@ -155,12 +154,6 @@ SettingsPage {
             text:               qsTr("Require Confirmation for Go To Location in Guided Mode")
             fact:               _goToLocationRequiresConfirmInGuided
             visible:            fact.visible
-        }
-
-        FactCheckBoxSlider {
-            Layout.fillWidth:   true
-            text:               qsTr("Use Terrain Frame in Guided Mode (ArduPilot)")
-            fact:               _useGuidedTerrainFrame
         }
     }
 

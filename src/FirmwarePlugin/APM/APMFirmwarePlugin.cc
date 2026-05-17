@@ -21,7 +21,6 @@
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"
 #include "PlanViewSettings.h"
-#include "FlyViewSettings.h"
 #include "VideoSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
 #include "ArduPlaneFirmwarePlugin.h"
@@ -795,24 +794,6 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoord
 {
     if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
-        return;
-    }
-
-    // If terrain-frame guided mode is enabled, send the goto as a MISSION_ITEM_INT
-    // with MAV_FRAME_GLOBAL_TERRAIN_ALT. This mirrors Mission Planner's wire format
-    // (NAV_WAYPOINT, frame=10) and avoids known issues with DO_REPOSITION + terrain
-    // frame in ArduPilot. The altitude is taken as the vehicle's current relative
-    // altitude, which ArduPilot will then track as height-above-terrain at the
-    // destination using its terrain database.
-    if (SettingsManager::instance()->flyViewSettings()->useGuidedTerrainFrame()->rawValue().toBool()) {
-        setGuidedMode(vehicle, true);
-        QGeoCoordinate coordWithAltitude = gotoCoord;
-        coordWithAltitude.setAltitude(vehicle->altitudeRelative()->rawValue().toDouble());
-        vehicle->missionManager()->writeArduPilotGuidedMissionItemInt(
-            coordWithAltitude,
-            MAV_FRAME_GLOBAL_TERRAIN_ALT,
-            false /* altChangeOnly */
-        );
         return;
     }
 

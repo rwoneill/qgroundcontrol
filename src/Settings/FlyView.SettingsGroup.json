@@ -102,12 +102,6 @@
     "min":          3,
     "max":          60,
     "default":      10
-},
-{
-    "name":         "useGuidedTerrainFrame",
-    "shortDesc":    "Send guided Go To Location commands in the terrain altitude frame (ArduPilot only). Altitudes are interpreted as height above ground at the destination.",
-    "type":         "bool",
-    "default":      false
 }
 ]
 }
